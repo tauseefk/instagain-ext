@@ -57,8 +57,7 @@ var instaGain = function (document) {
       .then(getNext)
       .then(delayShort)
       .then(likeCurrent)
-      .then(autoLike)
-      .catch(console.error.bind(this));
+      .then(autoLike);
   }
 
   return {
@@ -68,20 +67,20 @@ var instaGain = function (document) {
 function init() {
   chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     console.log(sender.tab ?
-      'from a content script:' + sender.tab.url :
+      'from a content script: ' + sender.tab.url :
       'from the extension');
     if (request.data == 'start') {
       let mostRecent = document.querySelectorAll('main>article>div')[1];
       let mostRecentPictures = mostRecent.querySelector('div').querySelectorAll('div');
       mostRecentPictures[0].querySelector('div>a').click();
       window.setTimeout(function () {
-        let app = instaGain(document);
+        var app = instaGain(document);
         app.start()
           .catch(function (e) {
-            chrome.runtime.sendMessages('', { data: 'error' });
+            chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });
           });
       }, 3000);
-      sendResponse({ farewell: 'goodbye' });
+      sendResponse({ data: 'working' });
     }
   });
 };

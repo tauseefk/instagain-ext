@@ -10,7 +10,7 @@
  *
  * @author tauseefk
  */
-'use scrict'
+'use strict'
 
 var instaGain = function (document) {
   var interval = 8000;

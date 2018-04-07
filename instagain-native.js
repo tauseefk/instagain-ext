@@ -10,12 +10,12 @@
  *
  * @author tauseefk
  */
-'use scrict'
-
+'use strict'
+var counter = 0;
 var instaGain = function (document) {
   var interval = 8000;
 
-  function delay(ms, res) {
+  function delay(ms) {
     return function (res) {
       return new Promise(function (resolve, reject) {
         setTimeout(function () {
@@ -25,7 +25,20 @@ var instaGain = function (document) {
     }
   }
 
+  function takeUntil(n) {
+    var _count = 0;
+    return function (res) {
+      return new Promise(function (resolve, reject) {
+        if (++_count > n) {
+          reject(new Error("limit_reached"));
+        }
+        resolve(res);
+      });
+    }
+  }
+
   let delayShort = delay(interval);
+  let take2K = takeUntil(2000);
 
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
@@ -37,6 +50,7 @@ var instaGain = function (document) {
         }
         resolve('already liked.');
       }
+      counter++;
       resolve();
     });
   }
@@ -57,6 +71,7 @@ var instaGain = function (document) {
       .then(getNext)
       .then(delayShort)
       .then(likeCurrent)
+      .then(take2K)
       .then(autoLike);
   }
 
@@ -85,7 +100,7 @@ function init() {
   });
 };
 
-readyStateCheckInterval = window.setInterval(function () {
+var readyStateCheckInterval = window.setInterval(function () {
   if (document.readyState === 'complete') {
     window.clearInterval(readyStateCheckInterval);
     init();

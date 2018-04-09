@@ -1,5 +1,5 @@
 (function () {
-  var tabStorage = {};
+  const tabStorage = {};
   const networkFilters = {
     urls: [
       "https://www.instagram.com/web/likes/*"
@@ -18,6 +18,7 @@
       startTime: details.timeStamp,
       status: 'pending'
     };
+
   }, networkFilters);
 
   chrome.webRequest.onCompleted.addListener((details) => {
@@ -33,6 +34,13 @@
       requestDuration: details.timeStamp - request.startTime,
       status: 'complete'
     });
+
+    if (details.status !== 200) {
+      chrome.tabs.update(tabId, {
+        url: "https://www.instagram.com/tauseef25"
+      });
+    }
+
   }, networkFilters);
 
   chrome.webRequest.onErrorOccurred.addListener((details) => {
@@ -47,9 +55,6 @@
       status: 'error',
     });
     console.log(tabStorage[tabId].requests[requestId]);
-    chrome.tabs.update(tabId, {
-      url: "https://www.instagram.com/tauseef25"
-    });
   }, networkFilters);
 
   chrome.tabs.onActivated.addListener((tab) => {

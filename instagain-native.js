@@ -11,7 +11,6 @@
  * @author tauseefk
  */
 'use strict'
-var counter = 0;
 var instaGain = function (document) {
   var interval = 8000;
 
@@ -50,7 +49,6 @@ var instaGain = function (document) {
         }
         resolve('already liked.');
       }
-      counter++;
       resolve();
     });
   }

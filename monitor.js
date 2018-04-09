@@ -1,5 +1,5 @@
 (function () {
-  const tabStorage = {};
+  var tabStorage = {};
   const networkFilters = {
     urls: [
       "https://www.instagram.com/web/likes/*"

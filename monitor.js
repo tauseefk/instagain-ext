@@ -35,7 +35,7 @@
       status: 'complete'
     });
 
-    if (details.status !== 200) {
+    if (details.statusCode !== 200) {
       chrome.tabs.update(tabId, {
         url: "https://www.instagram.com/tauseef25"
       });

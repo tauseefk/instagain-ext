@@ -1,15 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
+  let input = document.querySelector('#likeInput');
+  let valueLabel = document.querySelector('label');
+
+  input.addEventListener('change', e => {
+    valueLabel.textContent = e.target.value;
+  });
+
   var checkPageButton = document.getElementById('instagain');
   var tabId = null;
   checkPageButton.addEventListener('click', function () {
     chrome.tabs.query({ active: true }, function (tabs) {
       tabId = tabs[0].id;
       chrome.tabs.sendMessage(tabId,
-        { data: "start" },
+        {
+          data: {
+            operation: "start",
+            count: parseInt(valueLabel.textContent)
+          }
+        },
         {},
         function (res) {
           console.log(res);
-        })
+        });
     });
   }, false);
 
@@ -22,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (request.data == 'error') {
       chrome.tabs.update(tabId,
         {
-          url: 'https://www.instagram.com/explore/locations/218019304/troms-norway/'
+          url: 'https://www.instagram.com/fujifeed/'
         },
         function (tab) {
           setTimeout(function () {

@@ -8,7 +8,18 @@
 
 <body>
   <h1>Instagain</h1>
+  <h5>Likes</h5>
+  <input id="likeInput" type="range" list="tickmarks" min="0" step="50" max="1000" />
+  <datalist id="tickmarks">
+    <option value="0" label="0" />
+    <option value="250" label="250" />
+    <option value="500" label="500" />
+    <option value="750" label="750" />
+    <option value="1000" label="1000" />
+  </datalist>
+  <label for="likeInput">0</label>
   <button id="instagain">Start the stuff</button>
+
 </body>
 
 </html>

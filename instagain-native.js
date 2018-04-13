@@ -11,7 +11,7 @@
  * @author tauseefk
  */
 'use strict'
-var instaGain = function (document) {
+var instaGain = function (document, n) {
   var interval = 8000;
 
   function delay(ms) {
@@ -38,6 +38,7 @@ var instaGain = function (document) {
 
   let delayShort = delay(interval);
   let take2K = takeUntil(2000);
+  let takeN = takeUntil(n);
 
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
@@ -69,7 +70,7 @@ var instaGain = function (document) {
       .then(getNext)
       .then(delayShort)
       .then(likeCurrent)
-      .then(take2K)
+      .then(takeN)
       .then(autoLike);
   }
 
@@ -82,12 +83,12 @@ function init() {
     console.log(sender.tab ?
       'from a content script: ' + sender.tab.url :
       'from the extension');
-    if (request.data == 'start') {
+    if (request.data.operation == 'start') {
       let mostRecent = document.querySelectorAll('main>article>div')[1];
       let mostRecentPictures = mostRecent.querySelector('div').querySelectorAll('div');
       mostRecentPictures[0].querySelector('div>a').click();
       window.setTimeout(function () {
-        var app = instaGain(document);
+        var app = instaGain(document, request.data.count);
         app.start()
           .catch(function (e) {
             chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });

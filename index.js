@@ -6,15 +6,33 @@ document.addEventListener('DOMContentLoaded', function () {
     valueLabel.textContent = e.target.value;
   });
 
-  var checkPageButton = document.getElementById('instagain');
+  var startButton = document.getElementById('start');
+  var continueButton = document.getElementById('continue');
   var tabId = null;
-  checkPageButton.addEventListener('click', function () {
+  startButton.addEventListener('click', function () {
     chrome.tabs.query({ active: true }, function (tabs) {
       tabId = tabs[0].id;
       chrome.tabs.sendMessage(tabId,
         {
           data: {
-            operation: "start",
+            operation: 'start',
+            count: parseInt(valueLabel.textContent)
+          }
+        },
+        {},
+        function (res) {
+          console.log(res);
+        });
+    });
+  }, false);
+
+  continueButton.addEventListener('click', function () {
+    chrome.tabs.query({ active: true }, function (tabs) {
+      tabId = tabs[0].id;
+      chrome.tabs.sendMessage(tabId,
+        {
+          data: {
+            operation: 'continue',
             count: parseInt(valueLabel.textContent)
           }
         },

@@ -29,6 +29,7 @@ var instaGain = function (document, n) {
     return function (res) {
       return new Promise(function (resolve, reject) {
         if (++_count > n) {
+          alert('All done!');
           reject(new Error("limit_reached"));
         }
         resolve(res);
@@ -40,10 +41,21 @@ var instaGain = function (document, n) {
   let take2K = takeUntil(2000);
   let takeN = takeUntil(n);
 
+  function head(arr) {
+    if (Array.isArray(arr) && arr.length) {
+      return arr[0];
+    }
+  }
+
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
       try {
-        document.querySelector('.coreSpriteHeartOpen').click();
+        const link = [...document.querySelectorAll('article section>a')]
+          .filter(el => {
+            const childSpan = el.querySelector('span');
+            return childSpan && childSpan.textContent.toLowerCase() === 'like';
+          });
+        head(link).click();
       } catch (e) {
         if (e.name !== 'TypeError' || document.querySelector('.coreSpriteHeartFull') === null) {
           reject(e);
@@ -57,7 +69,9 @@ var instaGain = function (document, n) {
   function getNext() {
     return new Promise(function (resolve, reject) {
       try {
-        document.querySelector('.coreSpriteRightPaginationArrow').click();
+        const link = [...document.querySelectorAll('div>a')]
+          .filter(el => el.textContent.toLowerCase() === 'next');
+        head(link).click();
       } catch (e) {
         reject(e);
       }
@@ -83,7 +97,7 @@ function init() {
     console.log(sender.tab ?
       'from a content script: ' + sender.tab.url :
       'from the extension');
-    if (request.data.operation == 'start') {
+    if (request.data.operation === 'start') {
       let mostRecent = document.querySelectorAll('main>article>div')[1];
       let mostRecentPictures = mostRecent.querySelector('div').querySelectorAll('div');
       mostRecentPictures[0].querySelector('div>a').click();
@@ -95,6 +109,12 @@ function init() {
           });
       }, 3000);
       sendResponse({ data: 'working' });
+    } else if (request.data.operation === 'continue') {
+      var app = instaGain(document, request.data.count);
+      app.start()
+        .catch(function (e) {
+          chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });
+        });
     }
   });
 };

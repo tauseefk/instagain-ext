@@ -44,6 +44,8 @@ var instaGain = function (document, n) {
   function head(arr) {
     if (Array.isArray(arr) && arr.length) {
       return arr[0];
+    } else {
+      return null;
     }
   }
 
@@ -57,7 +59,12 @@ var instaGain = function (document, n) {
           });
         head(link).click();
       } catch (e) {
-        if (e.name !== 'TypeError' || document.querySelector('.coreSpriteHeartFull') === null) {
+        if (e.name !== 'TypeError'
+          || ![...document.querySelectorAll('article section>a')]
+            .filter(el => {
+              const childSpan = el.querySelector('span');
+              return childSpan && childSpan.textContent.toLowerCase() === 'unlike';
+            }).length) {
           reject(e);
         }
         resolve('already liked.');

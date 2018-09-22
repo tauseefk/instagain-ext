@@ -37,9 +37,31 @@ var instaGain = function (document, n) {
     }
   }
 
-  let delayShort = delay(interval);
-  let take2K = takeUntil(2000);
-  let takeN = takeUntil(n);
+  function branchInto(a, b) {
+    return function(condition) {
+      return new Promise(function(resolve, reject) {
+        // TODO add rejection if malformed
+        if(condition) {
+          resolve(a);
+        } else {
+          resolve(b);
+        }
+      });
+    }
+  }
+
+  function execCB (cb) {
+    return new Promise(function (resolve, reject) {
+      cb().then(resolve);
+    });
+  }
+
+  const delayShort = delay(interval);
+  const delay1 = delay(1000);
+  const immediate = delay(0);
+  const take2K = takeUntil(2000);
+  const takeN = takeUntil(n);
+  const delayOrImmediateIf = branchInto(delayShort, immediate);
 
   function head(arr) {
     if (Array.isArray(arr) && arr.length) {
@@ -51,20 +73,17 @@ var instaGain = function (document, n) {
 
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
+      const button = document.querySelector('.coreSpriteHeartOpen');
+      const icon = button.querySelector('span');
       try {
-        const link = [...document.querySelectorAll('article section>a')]
-          .filter(el => {
-            const childSpan = el.querySelector('span');
-            return childSpan && childSpan.textContent.toLowerCase() === 'like';
-          });
-        head(link).click();
+        const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled") > -1)
+        if(!isLiked) {
+          button.click();
+        } else {
+          throw(new Error('already liked'))
+        }
       } catch (e) {
-        if (e.name !== 'TypeError'
-          || ![...document.querySelectorAll('article section>a')]
-            .filter(el => {
-              const childSpan = el.querySelector('span');
-              return childSpan && childSpan.textContent.toLowerCase() === 'unlike';
-            }).length) {
+        if (e.name !== 'TypeError' && e.message !== 'already liked') {
           reject(e);
         }
         resolve('already liked.');
@@ -73,12 +92,27 @@ var instaGain = function (document, n) {
     });
   }
 
+  function checkIfLiked() {
+    return new Promise(function (resolve, reject) {
+      const button = document.querySelector('.coreSpriteHeartOpen');
+      const icon = button.querySelector('span');
+      try {
+        const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled") > -1)
+        if(isLiked) throw(new Error('already liked'))
+      } catch (e) {
+        if (e.name !== 'TypeError' && e.message !== 'already liked') {
+          reject(e);
+        }
+        resolve(true);
+      }
+      resolve(false);
+    });
+  }
+
   function getNext() {
     return new Promise(function (resolve, reject) {
       try {
-        const link = [...document.querySelectorAll('div>a')]
-          .filter(el => el.textContent.toLowerCase() === 'next');
-        head(link).click();
+        document.querySelector('.coreSpriteRightPaginationArrow').click();
       } catch (e) {
         reject(e);
       }
@@ -89,7 +123,10 @@ var instaGain = function (document, n) {
   function autoLike() {
     return Promise.resolve()
       .then(getNext)
-      .then(delayShort)
+      .then(delay1)
+      .then(checkIfLiked)
+      .then(isLiked => delayOrImmediateIf(!isLiked))
+      .then(execCB)
       .then(likeCurrent)
       .then(takeN)
       .then(autoLike);

@@ -12,7 +12,9 @@
  */
 'use strict'
 var instaGain = function (document, n) {
-  var interval = 8000;
+  const interval = 4000;
+  const filledLikeButton = '.glyphsSpriteHeart__filled__24__red_5';
+  const emptyLikeButton = '.glyphsSpriteHeart__outline__24__grey_9';
 
   function delay(ms) {
     return function (res) {
@@ -38,49 +40,31 @@ var instaGain = function (document, n) {
   }
 
   function branchInto(a, b) {
-    return function(condition) {
-      return new Promise(function(resolve, reject) {
-        // TODO add rejection if malformed
-        if(condition) {
-          resolve(a);
-        } else {
-          resolve(b);
-        }
-      });
+    return function (condition) {
+      return function (data) {
+        return condition ? Promise.resolve(a(data)) : Promise.resolve(b(data))
+      }
     }
-  }
-
-  function execCB (cb) {
-    return new Promise(function (resolve, reject) {
-      cb().then(resolve);
-    });
   }
 
   const delayShort = delay(interval);
   const delay1 = delay(1000);
+  const delay2 = delay(2000);
   const immediate = delay(0);
-  const take2K = takeUntil(2000);
   const takeN = takeUntil(n);
   const delayOrImmediateIf = branchInto(delayShort, immediate);
 
-  function head(arr) {
-    if (Array.isArray(arr) && arr.length) {
-      return arr[0];
-    } else {
-      return null;
-    }
-  }
-
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
-      const button = document.querySelector('.coreSpriteHeartOpen');
-      const icon = button.querySelector('span');
       try {
-        const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled") > -1)
-        if(!isLiked) {
-          button.click();
-        } else {
-          throw(new Error('already liked'))
+        const button = document.querySelectorAll(emptyLikeButton);
+        const filled = document.querySelector(filledLikeButton);
+        // const icon = button.querySelector('span');
+        // const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled__24__red_5") > -1)
+        if (button.length > 1) {
+          button[1].click();
+        } else if (filled) {
+          throw (new Error('already liked'))
         }
       } catch (e) {
         if (e.name !== 'TypeError' && e.message !== 'already liked') {
@@ -94,11 +78,11 @@ var instaGain = function (document, n) {
 
   function checkIfLiked() {
     return new Promise(function (resolve, reject) {
-      const button = document.querySelector('.coreSpriteHeartOpen');
-      const icon = button.querySelector('span');
       try {
+        const button = document.querySelector('.coreSpriteHeartOpen');
+        const icon = button.querySelector('span');
         const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled") > -1)
-        if(isLiked) throw(new Error('already liked'))
+        if (isLiked) throw (new Error('already liked'))
       } catch (e) {
         if (e.name !== 'TypeError' && e.message !== 'already liked') {
           reject(e);
@@ -120,14 +104,24 @@ var instaGain = function (document, n) {
     });
   }
 
+  function log(tag) {
+    return function (x) {
+      console.log(tag, x)
+      return x
+    }
+  }
+
   function autoLike() {
     return Promise.resolve()
       .then(getNext)
-      .then(delay1)
-      .then(checkIfLiked)
-      .then(isLiked => delayOrImmediateIf(!isLiked))
-      .then(execCB)
+      .then(delay2)
+      .then(_ => {
+        return checkIfLiked()
+          .then(isLiked => delayOrImmediateIf(!isLiked))
+          .then(branch => branch(_))
+      })
       .then(likeCurrent)
+      .then(delay2)
       .then(takeN)
       .then(autoLike);
   }
@@ -157,6 +151,7 @@ function init() {
       var app = instaGain(document, request.data.count);
       app.start()
         .catch(function (e) {
+          console.trace(e);
           chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });
         });
     }

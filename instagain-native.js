@@ -79,10 +79,11 @@ var instaGain = function (document, n) {
   function checkIfLiked() {
     return new Promise(function (resolve, reject) {
       try {
-        const button = document.querySelector('.coreSpriteHeartOpen');
-        const icon = button.querySelector('span');
-        const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled") > -1)
-        if (isLiked) throw (new Error('already liked'))
+        // const button = document.querySelector(emptyLikeButton);
+        // const icon = button.querySelector('span');
+        const button = document.querySelectorAll(emptyLikeButton);
+        const filled = document.querySelector(filledLikeButton);
+        if (filled) throw (new Error('already liked'))
       } catch (e) {
         if (e.name !== 'TypeError' && e.message !== 'already liked') {
           reject(e);

@@ -11,11 +11,15 @@
  * @author tauseefk
  */
 'use strict'
+
+const filledLikeButton = '.glyphsSpriteHeart__filled__24__red_5';
+const emptyLikeButton = '.glyphsSpriteHeart__outline__24__grey_9';
+
+const getImageArticle = () => document.querySelectorAll("article")[1]
+const getCTA = (article) => article.querySelector("section").querySelector("span>button");
+
 var instaGain = function (document, n) {
   const interval = 4000;
-  const filledLikeButton = '.glyphsSpriteHeart__filled__24__red_5';
-  const emptyLikeButton = '.glyphsSpriteHeart__outline__24__grey_9';
-
   function delay(ms) {
     return function (res) {
       return new Promise(function (resolve, reject) {
@@ -57,12 +61,11 @@ var instaGain = function (document, n) {
   function likeCurrent() {
     return new Promise(function (resolve, reject) {
       try {
-        const button = document.querySelectorAll(emptyLikeButton);
-        const filled = document.querySelector(filledLikeButton);
-        // const icon = button.querySelector('span');
-        // const isLiked = [...icon.classList].find(c => c.indexOf("glyphsSpriteHeart__filled__24__red_5") > -1)
-        if (button.length > 1) {
-          button[1].click();
+        const imageArticle = getImageArticle();
+        const likeButton = getCTA(imageArticle);
+
+        if (likeButton) {
+          likeButton.click();
         } else if (filled) {
           throw (new Error('already liked'))
         }
@@ -81,9 +84,11 @@ var instaGain = function (document, n) {
       try {
         // const button = document.querySelector(emptyLikeButton);
         // const icon = button.querySelector('span');
-        const button = document.querySelectorAll(emptyLikeButton);
-        const filled = document.querySelector(filledLikeButton);
-        if (filled) throw (new Error('already liked'))
+        const imageArticle = getImageArticle();
+        const likeButton = getCTA(imageArticle);
+        const isFilled = likeButton.querySelector("[aria-label='Unlike']") !== null;
+
+        if (isFilled) throw (new Error('already liked'))
       } catch (e) {
         if (e.name !== 'TypeError' && e.message !== 'already liked') {
           reject(e);

@@ -1,5 +1,5 @@
 {
-  "manifest_version": 3,
+  "manifest_version": 2,
   "name": "Instagram Plugin",
   "description": "This extension will do random stuff",
   "version": "1.1",

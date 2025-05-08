@@ -1,54 +1,32 @@
+// gets the parent of the like/unlike buttons
+const getCTA = () => document.querySelector("article span>svg").parentElement;
 
-/** Usage:
- * Open Instagram in the browser,
- * log-in with your account,
- * find the #hashtag that you can most relate with,
- * click on one of the pictures in the latest category,
- * run the following script in the browser console.
- *
- * Brace yourselves, followers are coming ;)
- *
- * @author tauseefk
- */
-'use strict'
-
-const filledLikeButton = '.glyphsSpriteHeart__filled__24__red_5';
-const emptyLikeButton = '.glyphsSpriteHeart__outline__24__grey_9';
-
-const getImageArticle = () => document.querySelectorAll("article")[1]
-const getCTA = (article) => article.querySelector("section").querySelector("span>button");
-
-var instaGain = function (document, n) {
+const instaGain = (document, n) => {
   const interval = 4000;
   function delay(ms) {
-    return function (res) {
-      return new Promise(function (resolve, reject) {
-        setTimeout(function () {
+    return (res) =>
+      new Promise((resolve, reject) => {
+        setTimeout(() => {
           resolve(res);
         }, ms);
       });
-    }
   }
 
   function takeUntil(n) {
-    var _count = 0;
-    return function (res) {
-      return new Promise(function (resolve, reject) {
+    let _count = 0;
+    return (res) =>
+      new Promise((resolve, reject) => {
         if (++_count > n) {
-          alert('All done!');
+          alert("All done!");
           reject(new Error("limit_reached"));
         }
         resolve(res);
       });
-    }
   }
 
   function branchInto(a, b) {
-    return function (condition) {
-      return function (data) {
-        return condition ? Promise.resolve(a(data)) : Promise.resolve(b(data))
-      }
-    }
+    return (condition) => (data) =>
+      condition ? Promise.resolve(a(data)) : Promise.resolve(b(data));
   }
 
   const delayShort = delay(interval);
@@ -57,40 +35,44 @@ var instaGain = function (document, n) {
   const immediate = delay(0);
   const takeN = takeUntil(n);
   const delayOrImmediateIf = branchInto(delayShort, immediate);
+  const probabilityFn = (probability) => {
+    return () => Math.random() < probability / 100;
+  };
+  const probabilitySmallPercent = probabilityFn(25);
 
   function likeCurrent() {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       try {
-        const imageArticle = getImageArticle();
-        const likeButton = getCTA(imageArticle);
+        const likeSVG = getCTA().querySelector("[aria-label='Like']");
+        const unlikeSVG = getCTA().querySelector("[aria-label='Unlike']");
 
-        if (likeButton) {
-          likeButton.click();
-        } else if (filled) {
-          throw (new Error('already liked'))
+        if (likeSVG && probabilitySmallPercent()) {
+          likeSVG.parentElement.click();
+        } else if (unlikeSVG) {
+          throw new Error("already liked");
         }
       } catch (e) {
-        if (e.name !== 'TypeError' && e.message !== 'already liked') {
+        if (e.name !== "TypeError" && e.message !== "already liked") {
           reject(e);
         }
-        resolve('already liked.');
+        resolve("already liked.");
       }
       resolve();
     });
   }
 
   function checkIfLiked() {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       try {
         // const button = document.querySelector(emptyLikeButton);
         // const icon = button.querySelector('span');
-        const imageArticle = getImageArticle();
-        const likeButton = getCTA(imageArticle);
-        const isFilled = likeButton.querySelector("[aria-label='Unlike']") !== null;
+        const likeButton = getCTA();
+        const isFilled =
+          likeButton.querySelector("[aria-label='Unlike']") !== null;
 
-        if (isFilled) throw (new Error('already liked'))
+        if (isFilled) throw new Error("already liked");
       } catch (e) {
-        if (e.name !== 'TypeError' && e.message !== 'already liked') {
+        if (e.name !== "TypeError" && e.message !== "already liked") {
           reject(e);
         }
         resolve(true);
@@ -100,9 +82,9 @@ var instaGain = function (document, n) {
   }
 
   function getNext() {
-    return new Promise(function (resolve, reject) {
+    return new Promise((resolve, reject) => {
       try {
-        document.querySelector('.coreSpriteRightPaginationArrow').click();
+        document.querySelector("[aria-label='Next']").parentElement.click();
       } catch (e) {
         reject(e);
       }
@@ -111,20 +93,20 @@ var instaGain = function (document, n) {
   }
 
   function log(tag) {
-    return function (x) {
-      console.log(tag, x)
-      return x
-    }
+    return (x) => {
+      console.log(tag, x);
+      return x;
+    };
   }
 
   function autoLike() {
     return Promise.resolve()
       .then(getNext)
       .then(delay2)
-      .then(_ => {
-        return checkIfLiked()
-          .then(isLiked => delayOrImmediateIf(!isLiked))
-          .then(branch => branch(_))
+      .then(async (_) => {
+        const isLiked = await checkIfLiked();
+        const branch = delayOrImmediateIf(!isLiked);
+        return await branch(_);
       })
       .then(likeCurrent)
       .then(delay2)
@@ -133,39 +115,41 @@ var instaGain = function (document, n) {
   }
 
   return {
-    start: autoLike
-  }
+    start: autoLike,
+  };
 };
 function init() {
-  chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    console.log(sender.tab ?
-      'from a content script: ' + sender.tab.url :
-      'from the extension');
-    if (request.data.operation === 'start') {
-      let mostRecent = document.querySelectorAll('main>article>div')[1];
-      let mostRecentPictures = mostRecent.querySelector('div').querySelectorAll('div');
-      mostRecentPictures[0].querySelector('div>a').click();
-      window.setTimeout(function () {
-        var app = instaGain(document, request.data.count);
-        app.start()
-          .catch(function (e) {
-            chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });
-          });
-      }, 3000);
-      sendResponse({ data: 'working' });
-    } else if (request.data.operation === 'continue') {
-      var app = instaGain(document, request.data.count);
-      app.start()
-        .catch(function (e) {
-          console.trace(e);
-          chrome.runtime.sendMessage(chrome.runtime.id, { data: 'error' });
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log(
+      sender.tab
+        ? `from a content script: ${sender.tab.url}`
+        : "from the extension",
+    );
+    if (request.data.operation === "start") {
+      const mostRecent = document.querySelectorAll("main article>div")[0];
+      const mostRecentPictures = mostRecent
+        .querySelector("div")
+        .querySelectorAll("div");
+      mostRecentPictures[0].querySelector("div>a").click();
+      window.setTimeout(() => {
+        const app = instaGain(document, request.data.count);
+        app.start().catch((e) => {
+          chrome.runtime.sendMessage(chrome.runtime.id, { data: "error" });
         });
+      }, 3000);
+      sendResponse({ data: "working" });
+    } else if (request.data.operation === "continue") {
+      const app = instaGain(document, request.data.count);
+      app.start().catch((e) => {
+        console.trace(e);
+        chrome.runtime.sendMessage(chrome.runtime.id, { data: "error" });
+      });
     }
   });
-};
+}
 
-var readyStateCheckInterval = window.setInterval(function () {
-  if (document.readyState === 'complete') {
+const readyStateCheckInterval = window.setInterval(() => {
+  if (document.readyState === "complete") {
     window.clearInterval(readyStateCheckInterval);
     init();
   }

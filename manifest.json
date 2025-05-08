@@ -1,29 +1,21 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Instagram Plugin",
   "description": "This extension will do random stuff",
   "version": "1.1",
-  "browser_action": {
+  "action": {
     "default_icon": "icon.png",
     "default_popup": "index.html"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.instagram.com/*"
-      ],
-      "js": [
-        "instagain-native.js"
-      ]
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["instagain-native.js"]
     }
   ],
   "background": {
-    "scripts": [
-      "./monitor.js"
-    ]
+    "service_worker": "./monitor.js"
   },
-  "permissions": [
-    "activeTab",
-    "webRequest"
-  ]
+  "permissions": ["activeTab", "webRequest"],
+  "host_permissions": ["https://www.instagram.com/*"]
 }

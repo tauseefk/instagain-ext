@@ -1,14 +1,12 @@
-(function () {
+(() => {
   const tabStorage = {};
   const networkFilters = {
-    urls: [
-      "https://www.instagram.com/web/likes/*"
-    ]
+    urls: ["https://www.instagram.com/web/likes/*"],
   };
 
   chrome.webRequest.onBeforeRequest.addListener((details) => {
     const { tabId, requestId } = details;
-    if (!tabStorage.hasOwnProperty(tabId)) {
+    if (!(tabId in tabStorage)) {
       return;
     }
 
@@ -16,14 +14,13 @@
       requestId: requestId,
       url: details.url,
       startTime: details.timeStamp,
-      status: 'pending'
+      status: "pending",
     };
-
   }, networkFilters);
 
   chrome.webRequest.onCompleted.addListener((details) => {
     const { tabId, requestId } = details;
-    if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
+    if (!(tabId in tabStorage) || !(requestId in tabStorage[tabId].requests)) {
       return;
     }
 
@@ -32,46 +29,45 @@
     Object.assign(request, {
       endTime: details.timeStamp,
       requestDuration: details.timeStamp - request.startTime,
-      status: 'complete'
+      status: "complete",
     });
 
     if (details.statusCode !== 200) {
       chrome.tabs.update(tabId, {
-        url: "https://www.instagram.com/tauseef25"
+        url: "https://www.instagram.com/tauseef25",
       });
     }
-
   }, networkFilters);
 
   chrome.webRequest.onErrorOccurred.addListener((details) => {
     const { tabId, requestId } = details;
-    if (!tabStorage.hasOwnProperty(tabId) || !tabStorage[tabId].requests.hasOwnProperty(requestId)) {
+    if (!(tabId in tabStorage) || !(requestId in tabStorage[tabId].requests)) {
       return;
     }
 
     const request = tabStorage[tabId].requests[requestId];
     Object.assign(request, {
       endTime: details.timeStamp,
-      status: 'error',
+      status: "error",
     });
     console.log(tabStorage[tabId].requests[requestId]);
   }, networkFilters);
 
   chrome.tabs.onActivated.addListener((tab) => {
     const tabId = tab ? tab.tabId : chrome.tabs.TAB_ID_NONE;
-    if (!tabStorage.hasOwnProperty(tabId)) {
+    if (!(tabId in tabStorage)) {
       tabStorage[tabId] = {
         id: tabId,
         requests: {},
-        registerTime: new Date().getTime()
+        registerTime: new Date().getTime(),
       };
     }
   });
-  chrome.tabs.onRemoved.addListener((tab) => {
-    const tabId = tab.tabId;
-    if (!tabStorage.hasOwnProperty(tabId)) {
+
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    if (!(tabId in tabStorage)) {
       return;
     }
-    tabStorage[tabId] = null;
+    delete tabStorage[tabId];
   });
-}());
+})();
